@@ -1,26 +1,36 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:online_store/controllers/banner_controller.dart';
-import 'package:online_store/models/banner_model.dart';
+import 'package:online_store/provider/banner_provider.dart';
 
-class BannerWidget extends StatefulWidget {
+class BannerWidget extends ConsumerStatefulWidget {
   const BannerWidget({super.key});
 
   @override
-  State<BannerWidget> createState() => _BannerWidgetState();
+  ConsumerState<BannerWidget> createState() => _BannerWidgetState();
 }
 
-class _BannerWidgetState extends State<BannerWidget> {
-  late Future<List<BannerModel>> futureBanners;
-  final BannerController _bannerController = BannerController();
+class _BannerWidgetState extends ConsumerState<BannerWidget> {
 
   @override
   void initState() {
     super.initState();
-    futureBanners = _bannerController.loadbanners();
+    _fetchBanner();
+  }
+
+  Future<void> _fetchBanner() async {
+    final BannerController bannerController = BannerController();
+    try {
+      final banner = await bannerController.loadbanners();
+      ref.read(bannerProvider.notifier).setBanner(banner);
+    } catch (e) {
+      throw Exception("Error fetching orders : $e");
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final banners = ref.watch(bannerProvider);
     return Padding(
       padding: const EdgeInsets.all(6.0),
       child: Container(
@@ -30,27 +40,15 @@ class _BannerWidgetState extends State<BannerWidget> {
           borderRadius: BorderRadius.circular(4),
           color: Color(0xFFF7F7F7),
         ),
-        child: FutureBuilder(
-          future: futureBanners,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return Center(child: const CircularProgressIndicator());
-            } else if (snapshot.hasError) {
-              return Center(child: Text("Error ${snapshot.error}"));
-            } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return Center(child: Text("No Banners"));
-            } else {
-              final banners = snapshot.data!;
-              return PageView.builder(
+        child: PageView.builder(
                 itemCount: banners.length,
                 itemBuilder: (context, index) {
                   final banner = banners[index];
-                  return Image.network(banner.image,fit: BoxFit.cover,);
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(10),
+                    child: Image.network(banner.image,fit: BoxFit.cover,));
                 },
-              );
-            }
-          },
-        ),
+              )
       ),
     );
   }

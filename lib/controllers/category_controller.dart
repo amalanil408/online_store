@@ -17,7 +17,11 @@ class CategoryController {
         List<dynamic> data =  jsonDecode(response.body);
         List<CategoryModel> categories = data.map((category) => CategoryModel.fromJson(category)).toList();
         return categories;
-      } else {
+      }
+      else if(response.statusCode == 404){
+        return [];
+      } 
+      else {
         throw Exception("Failed to load categories");
       }
     } catch (e) {

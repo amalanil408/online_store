@@ -12,12 +12,14 @@ class BannerController {
         'Content-Type' : 'application/json; charset=UTF-8'
       }
       );
-      print(response.body);
       if(response.statusCode == 200){
         List<dynamic> data = jsonDecode(response.body);
         List<BannerModel> banners =  data.map((source) => BannerModel.fromMap(source)).toList();
         return banners;
-      } else {
+      } else if(response.statusCode == 404){
+        return [];
+      }
+      else {
         throw Exception("Failed to load banners");
       }
     } catch (e) {
